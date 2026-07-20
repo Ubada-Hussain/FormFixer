@@ -1,35 +1,36 @@
-# FormFit
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-FormFit is a free, ad-free web app that fixes files so they match exactly what a scholarship or admission portal demands. It exists because the tools people currently use for this — random online compressors — are full of ads, unreliable, or quietly expensive, even though the task itself (resize a photo to 200×230px under 200KB, or turn a PDF into a Word file) should take seconds.
+## Getting Started
 
-## What it does
+First, run the development server:
 
-- **Compress**: Upload a photo and set a target file size and pixel dimensions, or pick a portal preset (UGC scholarship, Common App, JEE Mains, and more) to auto-fill the exact spec. Compression runs entirely in the browser via the Canvas API, so images never leave the user's device.
-- **Convert**: Combine images into a single PDF client-side, or convert between PDF and Word. Basic conversion is free; high-fidelity conversion for complex, table-heavy documents is a paid feature powered by a server-side engine (LibreOffice via Gotenberg).
-- **Presets library**: A searchable, growing list of scholarship and admission portals with their exact upload requirements, so users don't have to hunt for the spec themselves.
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-## Why it's different
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-- No ads on any plan, free or paid
-- Client-side processing for compression, so files stay private and results are instant
-- Honest freemium split: the free tier covers what most applications actually need; payment is only required for pixel-accurate document conversion
-- Built around real portal requirements rather than generic "compress by X%" sliders
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-## Tech stack
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-- **Frontend**: Next.js, React, TypeScript, Tailwind CSS
-- **Compression**: Canvas API / browser-image-compression (client-side)
-- **Document conversion**: LibreOffice headless via Gotenberg, self-hosted
-- **Storage**: Cloudflare R2
-- **Auth**: Clerk
-- **Database**: Supabase (Postgres)
-- **Payments**: Stripe
-- **Hosting**: Vercel (frontend), Railway/Fly.io (conversion workers)
+## Learn More
 
-## Status
+To learn more about Next.js, take a look at the following resources:
 
-Early-stage build. The compressor and images-to-PDF converter are functional; high-fidelity document conversion, accounts, and the saved-documents "Application Kit" are in progress.
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-## Contributing
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-Issues and pull requests are welcome, especially additions to the portal presets library — if you know a scholarship or admission portal's exact photo/document requirements, open a PR.
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
