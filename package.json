@@ -3,14 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/clean-next-cache.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/ensure-pages-manifest.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^5.7.6",
+    "@supabase/supabase-js": "^2.110.7",
+    "docx": "^9.7.1",
     "next": "14.2.35",
     "pdf-lib": "^1.17.1",
+    "pdf-parse": "^2.4.5",
     "react": "^18",
     "react-dom": "^18"
   },
@@ -18,6 +24,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "clerk": "^2.2.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "postcss": "^8",

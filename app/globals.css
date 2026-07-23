@@ -33,19 +33,19 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--font-manrope), sans-serif;
+  font-family: var(--font-geist-sans), sans-serif;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 h1, h2, h3 {
-  font-family: var(--font-fraunces), serif;
+  font-family: Georgia, 'Times New Roman', serif;
   font-weight: 600;
   margin: 0;
   letter-spacing: -0.01em;
 }
 em {
   font-style: italic;
-  font-family: var(--font-fraunces), serif;
+  font-family: Georgia, 'Times New Roman', serif;
   font-weight: 500;
   color: var(--teal-700);
 }
@@ -72,7 +72,7 @@ nav {
 nav .wrap { display: flex; align-items: center; justify-content: space-between; padding: 18px 32px; }
 .brand {
   display: flex; align-items: center; gap: 9px;
-  font-family: var(--font-fraunces), serif; font-weight: 600; font-size: 19px;
+  font-family: Georgia, 'Times New Roman', serif; font-weight: 600; font-size: 19px;
   text-decoration: none; color: var(--ink);
 }
 .brand .mark {
@@ -95,7 +95,7 @@ nav .wrap { display: flex; align-items: center; justify-content: space-between; 
 
 /* ─── Buttons ────────────────────────────────────────────────────────── */
 .btn {
-  font-family: var(--font-manrope), sans-serif;
+  font-family: var(--font-geist-sans), sans-serif;
   font-weight: 700; font-size: 14px;
   padding: 11px 20px; border-radius: 999px;
   border: 1px solid transparent; cursor: pointer;
@@ -187,7 +187,7 @@ header.hero { padding: 96px 0 40px; position: relative; overflow: hidden; }
 .target-label {
   position: absolute; top: -38px; left: 50%; transform: translateX(-50%);
   background: var(--teal-900); color: var(--teal-100);
-  font-family: var(--font-jetbrains-mono), monospace;
+  font-family: var(--font-geist-mono), monospace;
   font-size: 11px; font-weight: 500; padding: 5px 12px;
   border-radius: 8px; white-space: nowrap;
 }
@@ -205,7 +205,7 @@ header.hero { padding: 96px 0 40px; position: relative; overflow: hidden; }
   opacity: 0; transform: scale(0.4);
 }
 .check-badge svg { width: 20px; height: 20px; stroke: #fff; stroke-width: 3; fill: none; }
-.ruler-tick { position: absolute; font-family: var(--font-jetbrains-mono), monospace; font-size: 10.5px; color: var(--ink-faint); }
+.ruler-tick { position: absolute; font-family: var(--font-geist-mono), monospace; font-size: 10.5px; color: var(--ink-faint); }
 .rt-w { bottom: -34px; left: 50%; transform: translateX(-50%); }
 .rt-h { right: -46px; top: 50%; transform: translateY(-50%) rotate(90deg); }
 .floaty { position: absolute; color: var(--teal-500); opacity: 0.5; }
@@ -222,7 +222,7 @@ header.hero { padding: 96px 0 40px; position: relative; overflow: hidden; }
   position: relative;
   clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
 }
-.step-num { font-family: var(--font-jetbrains-mono), monospace; font-size: 12px; color: var(--teal-500); font-weight: 500; margin-bottom: 14px; display: block; }
+.step-num { font-family: var(--font-geist-mono), monospace; font-size: 12px; color: var(--teal-500); font-weight: 500; margin-bottom: 14px; display: block; }
 .step-card h3 { font-size: 19px; margin-bottom: 9px; }
 .step-card p { font-size: 14.5px; color: var(--ink-soft); margin: 0; }
 .step-icon { width: 38px; height: 38px; border-radius: 10px; background: var(--teal-100); color: var(--teal-700); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
@@ -257,7 +257,7 @@ header.hero { padding: 96px 0 40px; position: relative; overflow: hidden; }
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
   color: var(--teal-100);
 }
-.stat .num { font-family: var(--font-fraunces), serif; font-size: 44px; font-weight: 600; color: #fff; }
+.stat .num { font-family: Georgia, 'Times New Roman', serif; font-size: 44px; font-weight: 600; color: #fff; }
 .stat .label { font-size: 13.5px; color: var(--teal-200); margin-top: 4px; }
 
 /* ─── Closing ────────────────────────────────────────────────────────── */
@@ -284,7 +284,7 @@ input[type="file"] { display: none; }
 .field label { font-size: 12.5px; color: var(--ink-soft); font-weight: 700; display: block; margin-bottom: 7px; }
 select, input[type="number"] {
   width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
-  font-family: var(--font-manrope), sans-serif; font-size: 14px;
+  font-family: var(--font-geist-sans), sans-serif; font-size: 14px;
   background: var(--bg); color: var(--ink);
 }
 .dims { display: flex; gap: 8px; align-items: center; }
@@ -293,7 +293,7 @@ select, input[type="number"] {
 .preview-row.show { display: grid; }
 .preview-card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 18px; text-align: center; }
 .preview-card img { max-width: 100%; max-height: 220px; border-radius: 10px; border: 1px solid var(--line); }
-.preview-card .kb { font-family: var(--font-jetbrains-mono), monospace; font-size: 13px; margin-top: 10px; color: var(--ink-soft); }
+.preview-card .kb { font-family: var(--font-geist-mono), monospace; font-size: 13px; margin-top: 10px; color: var(--ink-soft); }
 .preview-card .kb.ok { color: var(--teal-700); font-weight: 700; }
 .status-line { margin-top: 16px; font-size: 13.5px; color: var(--ink-soft); display: none; }
 .status-line.show { display: block; }
@@ -311,7 +311,7 @@ select, input[type="number"] {
 .mode-btn .soon { font-size: 10.5px; background: var(--coral-100); color: var(--coral-700); padding: 2px 7px; border-radius: 6px; margin-left: 6px; font-weight: 700; }
 .filelist { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
 .filerow { display: flex; align-items: center; justify-content: space-between; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 13.5px; }
-.filerow .rm { cursor: pointer; color: var(--coral-700); font-weight: 700; font-size: 12px; }
+.filerow .rm { cursor: pointer; color: var(--coral-700); font-weight: 700; font-size: 12px; background: none; border: 0; padding: 0; }
 .action-row { margin-top: 22px; display: flex; gap: 12px; align-items: center; }
 .locked-panel { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 32px; text-align: center; }
 .locked-panel .ic { width: 34px; height: 34px; color: var(--coral-500); margin: 0 auto 14px; }
@@ -324,14 +324,14 @@ select, input[type="number"] {
 .search-bar input {
   width: 100%; padding: 13px 16px 13px 42px; border-radius: 999px;
   border: 1px solid var(--line);
-  font-family: var(--font-manrope), sans-serif; font-size: 14.5px;
+  font-family: var(--font-geist-sans), sans-serif; font-size: 14.5px;
   background: var(--paper); color: var(--ink);
 }
 .search-bar svg { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; stroke: var(--ink-faint); stroke-width: 1.8; fill: none; }
 .preset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .preset-card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 20px; }
 .preset-card h3 { font-size: 15.5px; margin-bottom: 10px; }
-.spec-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ink-soft); padding: 4px 0; font-family: var(--font-jetbrains-mono), monospace; }
+.spec-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ink-soft); padding: 4px 0; font-family: var(--font-geist-mono), monospace; }
 .preset-card .go { margin-top: 14px; display: block; font-size: 13px; font-weight: 700; color: var(--teal-700); text-decoration: none; }
 .empty { display: none; text-align: center; padding: 60px 0; color: var(--ink-faint); }
 .empty.show { display: block; }
@@ -342,8 +342,8 @@ select, input[type="number"] {
 .plan.featured { border: 2px solid var(--teal-500); }
 .badge { position: absolute; top: -13px; left: 28px; background: var(--teal-700); color: #fff; font-size: 11.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; }
 .plan h3 { font-size: 19px; margin-bottom: 6px; }
-.plan .price { font-family: var(--font-fraunces), serif; font-size: 38px; font-weight: 600; margin: 14px 0 4px; }
-.plan .price span { font-size: 14px; font-family: var(--font-manrope), sans-serif; color: var(--ink-faint); font-weight: 500; }
+.plan .price { font-family: Georgia, 'Times New Roman', serif; font-size: 38px; font-weight: 600; margin: 14px 0 4px; }
+.plan .price span { font-size: 14px; font-family: var(--font-geist-sans), sans-serif; color: var(--ink-faint); font-weight: 500; }
 .plan .desc { font-size: 13.5px; color: var(--ink-soft); margin-bottom: 20px; }
 .plan ul { list-style: none; padding: 0; margin: 0 0 26px; display: flex; flex-direction: column; gap: 11px; }
 .plan li { display: flex; gap: 9px; font-size: 13.5px; align-items: flex-start; }

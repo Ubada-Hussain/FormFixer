@@ -1,51 +1,67 @@
 import type { Metadata } from 'next';
-import { Manrope, Fraunces, JetBrains_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
+import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
-const manrope = Manrope({
-  subsets: ['latin'],
-  weight: ['400', '500', '700', '800'],
-  variable: '--font-manrope',
+const geistSans = localFont({
+  src: './fonts/GeistVF.woff',
+  variable: '--font-geist-sans',
   display: 'swap',
 });
 
-const fraunces = Fraunces({
-  subsets: ['latin'],
-  weight: ['500', '600'],
-  style: ['normal', 'italic'],
-  variable: '--font-fraunces',
-  display: 'swap',
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  weight: ['500'],
-  variable: '--font-jetbrains-mono',
+const geistMono = localFont({
+  src: './fonts/GeistMonoVF.woff',
+  variable: '--font-geist-mono',
   display: 'swap',
 });
 
 export const metadata: Metadata = {
   title: {
-    default: 'FormFit — fix your file for any form',
-    template: '%s — FormFit',
+    default: 'FormFit - fix your file for any form',
+    template: '%s - FormFit',
   },
   description:
-    "Compress photos and convert documents to the precise size a portal demands — no guesswork, no sketchy tools, no popups telling you it\u0027s still too big.",
+    "Compress photos and convert documents to the precise size a portal demands - no guesswork, no sketchy tools, and no popups telling you it's still too big.",
+};
+
+const clerkAppearance = {
+  variables: {
+    colorPrimary: '#0d7c71',
+    colorBackground: '#ffffff',
+    colorText: '#1c2826',
+    colorTextSecondary: '#62706d',
+    colorInputBackground: '#faf8f5',
+    colorInputText: '#1c2826',
+    borderRadius: '0.75rem',
+    fontFamily: 'var(--font-geist-sans), sans-serif',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const hasValidClerkKey = Boolean(
+    publishableKey &&
+    publishableKey.startsWith('pk_') &&
+    !publishableKey.includes('YOUR_PUBLISHABLE_KEY')
+  );
+
+  const innerBody = (
+    <body>
+      <Navbar />
+      {children}
+      <Footer />
+    </body>
+  );
+
   return (
-    <html
-      lang="en"
-      className={`${manrope.variable} ${fraunces.variable} ${jetbrainsMono.variable}`}
-    >
-      <body>
-        <Navbar />
-        {children}
-        <Footer />
-      </body>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      {hasValidClerkKey ? (
+        <ClerkProvider appearance={clerkAppearance}>
+          {innerBody}
+        </ClerkProvider>
+      ) : innerBody}
     </html>
   );
 }

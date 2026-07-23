@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import { PRESET_SELECT_OPTIONS } from '@/lib/presets';
 
 export default function CompressPage() {
   // Store File in a ref — never stale, safe from React Concurrent Mode copies
   const fileRef = useRef<File | null>(null);
+  const originalUrlRef = useRef<string | null>(null);
+  const compressedUrlRef = useRef<string | null>(null);
   const [hasFile, setHasFile] = useState(false);
   const [origUrl, setOrigUrl] = useState('');
   const [origKb, setOrigKb] = useState('');
@@ -21,7 +24,30 @@ export default function CompressPage() {
   const [dropzoneName, setDropzoneName] = useState('Drop a photo here');
   const [downloadHref, setDownloadHref] = useState('');
 
+  // Daily Usage State
+  const [remainingActions, setRemainingActions] = useState<number | null>(null);
+  const [isLimitReached, setIsLimitReached] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch('/api/usage')
+      .then((res) => res.json())
+      .then((data) => {
+        if (typeof data.remaining === 'number') {
+          setRemainingActions(data.remaining);
+          if (data.remaining <= 0) {
+            setIsLimitReached(true);
+          }
+        }
+      })
+      .catch((err) => console.error('Failed to load usage count:', err));
+
+    return () => {
+      if (originalUrlRef.current) URL.revokeObjectURL(originalUrlRef.current);
+      if (compressedUrlRef.current) URL.revokeObjectURL(compressedUrlRef.current);
+    };
+  }, []);
 
   const handleFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -30,8 +56,16 @@ export default function CompressPage() {
     }
     fileRef.current = file;
     setHasFile(true);
+    if (originalUrlRef.current) URL.revokeObjectURL(originalUrlRef.current);
+    if (compressedUrlRef.current) URL.revokeObjectURL(compressedUrlRef.current);
     const url = URL.createObjectURL(file);
+    originalUrlRef.current = url;
     setOrigUrl(url);
+    compressedUrlRef.current = null;
+    setCompUrl('');
+    setCompKb('');
+    setCompKbOk(false);
+    setShowDownload(false);
     setOrigKb((file.size / 1024).toFixed(1) + ' KB');
     setShowPreview(true);
     setDropzoneName(file.name);
@@ -53,93 +87,115 @@ export default function CompressPage() {
     setTargetKb(parts[3]);
   };
 
-  const compress = useCallback(() => {
+  const compress = useCallback(async () => {
     const file = fileRef.current;
-    if (!file) return;
+    if (!file || isLimitReached) return;
     setBusy(true);
-    setStatus('Compressing…');
+    setStatus('Checking daily usage limit…');
 
-    const objectUrl = URL.createObjectURL(file);
-    const img = new Image();
-
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      setStatus('Could not load the image. Please try a different file.');
-      setBusy(false);
-    };
-
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      try {
-        const canvas = document.createElement('canvas');
-        // Use the image's natural dimensions
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          setStatus('Canvas unavailable in this browser. Please try again.');
-          setBusy(false);
-          return;
-        }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-        let quality = 0.92;
-        let attempts = 0;
-
-        const finish = (blob: Blob, kb: number, att: number) => {
-          const url = URL.createObjectURL(blob);
-          setCompUrl(url);
-          setCompKb(kb.toFixed(1) + ' KB');
-          setCompKbOk(kb <= targetKb);
-          setStatus(
-            kb <= targetKb
-              ? `Fit inside ${targetKb}KB after ${att} pass${att > 1 ? 'es' : ''}.`
-              : `Got as low as ${kb.toFixed(1)}KB — couldn’t reach ${targetKb}KB at this quality.`
-          );
-          setDownloadHref(url);
-          setShowDownload(true);
-          setBusy(false);
-        };
-
-        const tryCompress = () => {
-          canvas.toBlob(
-            (blob) => {
-              try {
-                if (!blob) {
-                  setStatus('Compression produced no output. Try a different file or format.');
-                  setBusy(false);
-                  return;
-                }
-                attempts++;
-                const kb = blob.size / 1024;
-                if (kb <= targetKb || quality <= 0.1 || attempts > 14) {
-                  finish(blob, kb, attempts);
-                } else {
-                  quality -= 0.07;
-                  tryCompress();
-                }
-              } catch (err) {
-                console.error('Compression loop error:', err);
-                setStatus('Compression failed. Please try again.');
-                setBusy(false);
-              }
-            },
-            'image/jpeg',
-            quality
-          );
-        };
-
-        tryCompress();
-      } catch (err) {
-        console.error('Compression setup error:', err);
-        setStatus('Compression failed. Please try again.');
+    try {
+      // Check & increment usage limit
+      const usageRes = await fetch('/api/usage', { method: 'POST' });
+      if (usageRes.status === 403) {
+        setIsLimitReached(true);
+        setRemainingActions(0);
+        setStatus("You've used today's 5 free actions. Upgrade to Pro for unlimited, or come back tomorrow.");
         setBusy(false);
+        return;
       }
-    };
 
-    img.src = objectUrl;
-  }, [targetKb]); // fileRef is a ref — no need in deps
+      const usageData = await usageRes.json();
+      if (typeof usageData.remaining === 'number') {
+        setRemainingActions(usageData.remaining);
+      }
 
+      setStatus('Compressing…');
+      const objectUrl = URL.createObjectURL(file);
+      const img = new Image();
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        setStatus('Could not load the image. Please try a different file.');
+        setBusy(false);
+      };
+
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            setStatus('Canvas unavailable in this browser. Please try again.');
+            setBusy(false);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          let quality = 0.92;
+          let attempts = 0;
+
+          const finish = (blob: Blob, kb: number, att: number) => {
+            const url = URL.createObjectURL(blob);
+            if (compressedUrlRef.current) URL.revokeObjectURL(compressedUrlRef.current);
+            compressedUrlRef.current = url;
+            setCompUrl(url);
+            setCompKb(kb.toFixed(1) + ' KB');
+            setCompKbOk(kb <= targetKb);
+            setStatus(
+              kb <= targetKb
+                ? `Fit inside ${targetKb}KB after ${att} pass${att > 1 ? 'es' : ''}.`
+                : `Got as low as ${kb.toFixed(1)}KB — couldn’t reach ${targetKb}KB at this quality.`
+            );
+            setDownloadHref(url);
+            setShowDownload(true);
+            setBusy(false);
+          };
+
+          const tryCompress = () => {
+            canvas.toBlob(
+              (blob) => {
+                try {
+                  if (!blob) {
+                    setStatus('Compression produced no output. Try a different file or format.');
+                    setBusy(false);
+                    return;
+                  }
+                  attempts++;
+                  const kb = blob.size / 1024;
+                  if (kb <= targetKb || quality <= 0.1 || attempts > 14) {
+                    finish(blob, kb, attempts);
+                  } else {
+                    quality -= 0.07;
+                    tryCompress();
+                  }
+                } catch (err) {
+                  console.error('Compression loop error:', err);
+                  setStatus('Compression failed. Please try again.');
+                  setBusy(false);
+                }
+              },
+              'image/jpeg',
+              quality
+            );
+          };
+
+          tryCompress();
+        } catch (err) {
+          console.error('Compression setup error:', err);
+          setStatus('Compression failed. Please try again.');
+          setBusy(false);
+        }
+      };
+
+      img.src = objectUrl;
+    } catch (err) {
+      console.error('Compress action error:', err);
+      setStatus('Something went wrong. Please try again.');
+      setBusy(false);
+    }
+  }, [targetKb, isLimitReached]);
 
   return (
     <>
@@ -236,18 +292,37 @@ export default function CompressPage() {
                   id="targetKb"
                   placeholder="e.g. 200"
                   value={targetKb}
-                  onChange={(e) => setTargetKb(Number(e.target.value))}
+                  min="1"
+                  onChange={(e) => setTargetKb(Math.max(1, Number(e.target.value) || 1))}
                 />
               </div>
+
+              {remainingActions !== null && (
+                <div className="text-xs text-[var(--ink-soft)] font-medium mb-3">
+                  {remainingActions} of 5 free actions left today.
+                </div>
+              )}
+
               <button
                 id="compressBtn"
                 className="btn btn-primary"
                 style={{ width: '100%', justifyContent: 'center' }}
-                disabled={!hasFile || busy}
+                disabled={!hasFile || busy || isLimitReached}
                 onClick={compress}
               >
                 {busy ? 'Compressing…' : 'Compress file'}
               </button>
+
+              {isLimitReached && (
+                <div className="mt-4 p-4 border border-[var(--coral-200)] bg-[var(--coral-100)] rounded-xl text-center space-y-3">
+                  <p className="text-xs text-[var(--coral-700)] font-medium leading-relaxed">
+                    You&apos;ve used today&apos;s 5 free actions. Upgrade to Pro for unlimited, or come back tomorrow.
+                  </p>
+                  <Link href="/pricing" className="btn btn-primary text-xs py-2 px-4 inline-block">
+                    Upgrade to Pro
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>

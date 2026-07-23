@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 
 const NAV_LINKS = [
   { href: '/compress', label: 'Compress' },
@@ -13,6 +14,12 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const hasValidClerkKey = Boolean(
+    publishableKey &&
+    publishableKey.startsWith('pk_') &&
+    !publishableKey.includes('YOUR_PUBLISHABLE_KEY')
+  );
 
   return (
     <nav>
@@ -34,13 +41,42 @@ export default function Navbar() {
           ))}
         </div>
 
-        <div className="navcta">
-          <Link href="/pricing" className="btn btn-ghost btn-sm">
-            Pricing
-          </Link>
-          <Link href="/compress" className="btn btn-primary btn-sm">
-            Fix a file free
-          </Link>
+        <div className="navcta flex items-center gap-3">
+          {hasValidClerkKey ? (
+            <>
+              <SignedOut>
+                <Link href="/sign-in" className="btn btn-ghost btn-sm">
+                  Sign in
+                </Link>
+                <Link href="/compress" className="btn btn-primary btn-sm">
+                  Fix a file free
+                </Link>
+              </SignedOut>
+
+              <SignedIn>
+                <Link href="/compress" className="btn btn-ghost btn-sm">
+                  Compress
+                </Link>
+                <UserButton
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      avatarBox: 'w-9 h-9 border border-[#e2ded6] shadow-sm',
+                    },
+                  }}
+                />
+              </SignedIn>
+            </>
+          ) : (
+            <>
+              <Link href="/sign-in" className="btn btn-ghost btn-sm">
+                Sign in
+              </Link>
+              <Link href="/compress" className="btn btn-primary btn-sm">
+                Fix a file free
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

@@ -271,13 +271,13 @@ export default function HomePage() {
               <div className="num">
                 <span className="counter" data-target="20" data-suffix="+">0</span>
               </div>
-              <div className="label">portal presets and counting</div>
+              <div className="label">portal presets</div>
             </div>
             <div className="stat reveal">
               <div className="num">
                 <span className="counter" data-target="100" data-suffix="%">0</span>
               </div>
-              <div className="label">processed on your own device</div>
+              <div className="label">on-device processing</div>
             </div>
             <div className="stat reveal">
               <div className="num">
