@@ -42,6 +42,7 @@ async def convert_pdf_to_docx(file: UploadFile = File(...)):
         with open(pdf_path, "wb") as f:
             f.write(pdf_bytes)
 
+        # Imported here to prevent heavy load at startup
         from pdf2docx import Converter
         cv = Converter(pdf_path)
         cv.convert(docx_path, start=0, end=None)
@@ -53,7 +54,6 @@ async def convert_pdf_to_docx(file: UploadFile = File(...)):
                 detail="Conversion produced no output file — the PDF may be image-only or encrypted.",
             )
 
-        # Read the docx into memory before deleting temp files
         with open(docx_path, "rb") as f:
             docx_bytes = f.read()
 
@@ -75,5 +75,12 @@ async def convert_pdf_to_docx(file: UploadFile = File(...)):
         logger.error(f"Conversion error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
     finally:
-        # Always clean up temp files
         shutil.rmtree(tmp_dir, ignore_errors=True)
+
+if __name__ == "__main__":
+    import uvicorn
+    # Railway passes the PORT environment variable.
+    # Programmatic parsing guarantees it binds correctly regardless of Docker CMD shell expansion bugs.
+    port = int(os.environ.get("PORT", 8000))
+    logger.info(f"Starting uvicorn on port {port}")
+    uvicorn.run(app, host="0.0.0.0", port=port)
