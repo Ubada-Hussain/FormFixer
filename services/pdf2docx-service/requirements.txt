@@ -1,6 +1,6 @@
 fastapi==0.111.0
 uvicorn[standard]==0.30.1
-# pdf2docx-headless uses opencv-python-headless instead of opencv-python
-# — no GUI/display server needed, much smaller Docker image, no libGL issues
-pdf2docx-headless==0.5.13
+# pdf2docx-headless uses opencv-python-headless (no GUI/libGL deps — required on Railway)
+# Latest available version on PyPI is 0.5.8
+pdf2docx-headless==0.5.8
 python-multipart==0.0.9
