@@ -17,7 +17,7 @@ function CheckIcon() {
 }
 
 export default function PricingPage() {
-  const { userId, sessionClaims } = auth();
+  const { sessionClaims } = auth();
   const isPro = sessionClaims?.metadata?.isPro === true;
 
   return (

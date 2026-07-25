@@ -19,7 +19,7 @@ export default function PrivacyPage() {
         <div className="wrap">
           <div className="max-w-3xl story">
             <p>
-              At FormFixer, our entire philosophy is built around a secure and private utility. We don't want your data, and we don't have ad slots to sell to third parties. Here is exactly what we collect and how it is used.
+              At FormFixer, our entire philosophy is built around a secure and private utility. We don&apos;t want your data, and we don&apos;t have ad slots to sell to third parties. Here is exactly what we collect and how it is used.
             </p>
 
             <h3 className="text-xl font-bold font-[Georgia] text-[var(--ink)] mt-10 mb-4">1. Document Processing</h3>

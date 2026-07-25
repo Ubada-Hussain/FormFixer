@@ -17,7 +17,7 @@ export function rateLimit(identifier: string, limit: number, windowMs: number): 
 
   // Clean up expired entries occasionally to prevent memory leaks (1% chance on each run)
   if (Math.random() < 0.01) {
-    for (const [key, value] of rateLimitCache.entries()) {
+    for (const [key, value] of Array.from(rateLimitCache.entries())) {
       if (now > value.resetTime) {
         rateLimitCache.delete(key);
       }

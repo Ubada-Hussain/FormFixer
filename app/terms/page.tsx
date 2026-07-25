@@ -39,7 +39,7 @@ export default function TermsPage() {
 
             <h3 className="text-xl font-bold font-[Georgia] text-[var(--ink)] mt-10 mb-4">4. Liability</h3>
             <p>
-              We strive to provide accurate compression sizes and perfect document formatting. However, FormFixer is provided "as is" without warranties of any kind. You are solely responsible for reviewing your processed documents before submitting them to any official portal or authority. We are not liable for rejected applications resulting from converted documents.
+              We strive to provide accurate compression sizes and perfect document formatting. However, FormFixer is provided &quot;as is&quot; without warranties of any kind. You are solely responsible for reviewing your processed documents before submitting them to any official portal or authority. We are not liable for rejected applications resulting from converted documents.
             </p>
 
             <p className="mt-12 text-sm text-[var(--ink-faint)]">
