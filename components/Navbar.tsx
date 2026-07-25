@@ -26,7 +26,7 @@ export default function Navbar() {
       <div className="wrap">
         <Link href="/" className="brand">
           <span className="mark" />
-          FormFit
+          FormFixer
         </Link>
 
         <div className="navlinks">

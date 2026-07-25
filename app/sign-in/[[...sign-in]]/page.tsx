@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Sign In',
-  description: 'Sign in to your FormFit account.',
+  description: 'Sign in to your FormFixer account.',
 };
 
 export default function SignInPage() {

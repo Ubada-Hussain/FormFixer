@@ -8,7 +8,7 @@ async function createSamplePdf() {
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const page = pdfDoc.addPage([600, 800]);
 
-  page.drawText('FormFit Project Overview Document', {
+  page.drawText('FormFixer Project Overview Document', {
     x: 50,
     y: 730,
     size: 20,
@@ -16,7 +16,7 @@ async function createSamplePdf() {
     color: rgb(0.05, 0.43, 0.34),
   });
 
-  const p1 = 'FormFit is an intelligent document management system that simplifies application procedures for students and professionals across Pakistan and worldwide.';
+  const p1 = 'FormFixer is an intelligent document management system that simplifies application procedures for students and professionals across Pakistan and worldwide.';
   const p2 = 'Our mission is to eliminate portal rejection errors by ensuring files match target size constraints and document formatting standards without sacrificing visual clarity or privacy.';
   const p3 = 'All document processing runs with speed and security, preserving original content, typography, and structure throughout the conversion lifecycle.';
 

@@ -19,8 +19,8 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: {
-    default: 'FormFit - fix your file for any form',
-    template: '%s - FormFit',
+    default: 'FormFixer - fix your file for any form',
+    template: '%s - FormFixer',
   },
   description:
     "Compress photos and convert documents to the precise size a portal demands - no guesswork, no sketchy tools, and no popups telling you it's still too big.",

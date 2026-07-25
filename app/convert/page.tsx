@@ -92,7 +92,7 @@ export default function ConvertPage() {
       const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'formfit-document.pdf';
+      a.download = 'formfixer-document.pdf';
       a.click();
       const n = fileEntries.length;
       setStatus(`PDF downloaded — ${n} page${n > 1 ? 's' : ''}.`);

@@ -216,7 +216,7 @@ export default function HomePage() {
       <section id="features">
         <div className="wrap">
           <div className="section-head">
-            <span className="tag">Why FormFit</span>
+            <span className="tag">Why FormFixer</span>
             <h2>Everything the other compressors got wrong, fixed.</h2>
           </div>
           <div className="features">

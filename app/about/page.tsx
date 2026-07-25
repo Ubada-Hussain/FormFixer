@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'Why FormFit exists — built after one too many broken compressor sites, for students filling out scholarship and admission forms.',
+    'Why FormFixer exists — built after one too many broken compressor sites, for students filling out scholarship and admission forms.',
 };
 
 export default function AboutPage() {
@@ -11,7 +11,7 @@ export default function AboutPage() {
     <>
       <header className="page-hero">
         <div className="wrap">
-          <span className="tag">Why FormFit exists</span>
+          <span className="tag">Why FormFixer exists</span>
           <h1>Built after one too many broken compressor sites.</h1>
         </div>
       </header>
@@ -27,7 +27,7 @@ export default function AboutPage() {
               or compressors that quietly cost money for something that should take five seconds.
             </p>
             <p>
-              FormFit exists to be the tool that just works. No account needed for the basics.
+              FormFixer exists to be the tool that just works. No account needed for the basics.
               No ad slots to fund. Files are processed right in your browser, so a photo or
               signature never has to leave your device to get resized.
             </p>
@@ -44,7 +44,7 @@ export default function AboutPage() {
               </ul>
             </div>
             <div className="col good">
-              <h4>What FormFit does instead</h4>
+              <h4>What FormFixer does instead</h4>
               <ul>
                 <li>No ads on any plan, free or paid</li>
                 <li>One clear tool per page, nothing hidden</li>

@@ -5,7 +5,7 @@ import { auth } from '@clerk/nextjs/server';
 export const metadata: Metadata = {
   title: 'Pricing',
   description:
-    'FormFit pricing — 5 free compress or convert actions every day. Upgrade to Pro for unlimited daily actions.',
+    'FormFixer pricing — 5 free compress or convert actions every day. Upgrade to Pro for unlimited daily actions.',
 };
 
 function CheckIcon() {
@@ -97,7 +97,7 @@ export default function PricingPage() {
             </div>
             <div className="faq-item">
               <h4>Do you show ads on the Free plan?</h4>
-              <p>No. FormFit never shows ads or popups on any plan, free or paid.</p>
+              <p>No. FormFixer never shows ads or popups on any plan, free or paid.</p>
             </div>
           </div>
         </div>
