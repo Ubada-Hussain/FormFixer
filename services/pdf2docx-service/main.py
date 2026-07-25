@@ -17,6 +17,10 @@ def health():
     return {"status": "up"}
 
 
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+MAX_PAGES = 200
+
+
 @app.post("/convert")
 async def convert_pdf_to_docx(
     file: UploadFile = File(...),
@@ -39,6 +43,12 @@ async def convert_pdf_to_docx(
     if len(pdf_bytes) == 0:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
+    if len(pdf_bytes) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File is too large ({len(pdf_bytes) / 1024 / 1024:.1f} MB). Maximum allowed size is 10 MB.",
+        )
+
     logger.info(f"Converting '{file.filename}' ({len(pdf_bytes):,} bytes) → .docx")
 
     tmp_dir = tempfile.mkdtemp()
@@ -49,9 +59,17 @@ async def convert_pdf_to_docx(
         with open(pdf_path, "wb") as f:
             f.write(pdf_bytes)
 
-        # 1. RTL / Urdu / Arabic Check
+        # 1. RTL / Urdu / Arabic Check + page count guard
         import fitz
         doc = fitz.open(pdf_path)
+
+        if len(doc) > MAX_PAGES:
+            doc.close()
+            raise HTTPException(
+                status_code=413,
+                detail=f"PDF has {len(doc)} pages. Maximum allowed is {MAX_PAGES} pages.",
+            )
+
         sample_text = ""
         for i in range(min(2, len(doc))):
             sample_text += doc[i].get_text()
@@ -96,8 +114,12 @@ async def convert_pdf_to_docx(
     except HTTPException:
         raise
     except Exception as e:
+        # Log the full traceback server-side, but never expose it to the caller
         logger.error(f"Conversion error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Conversion failed due to an internal error. Please try a different file.",
+        )
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
 

@@ -163,7 +163,7 @@ export async function POST(req: Request) {
       const errText = await res.text().catch(() => '(no body)');
       console.error('[/api/convert] pdf2docx service error', res.status, errText);
       return NextResponse.json(
-        { error: `PDF-to-Word conversion failed (service error ${res.status}): ${errText}` },
+        { error: 'PDF-to-Word conversion failed. The file may be corrupted, encrypted, or too complex. Please try a different file.' },
         { status: 502 }
       );
     }
@@ -220,7 +220,7 @@ export async function POST(req: Request) {
       const errText = await res.text().catch(() => '(no body)');
       console.error('[/api/convert] Gotenberg error', res.status, errText);
       return NextResponse.json(
-        { error: `Word-to-PDF conversion failed (Gotenberg ${res.status}): ${errText}` },
+        { error: 'Word-to-PDF conversion failed. The file may be corrupted or in an unsupported format. Please try a different file.' },
         { status: 502 }
       );
     }
