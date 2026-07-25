@@ -77,7 +77,7 @@ export default function HomePage() {
               No ads. No sign-up needed.
             </span>
             <h1>
-              Turn any file into <em>exactly</em> what the form wants.
+              Turn your files into <em>exactly</em> what the form wants.
             </h1>
             <p className="lede">
               Compress photos and convert documents to the precise size a portal demands — no
@@ -92,7 +92,7 @@ export default function HomePage() {
               </Link>
             </div>
             <p className="hero-note">
-              Processed on your device. Your documents never get uploaded anywhere.
+              Compression happens 100% on your device. Document conversion is processed securely on our servers and deleted immediately after.
             </p>
           </div>
 
@@ -277,7 +277,7 @@ export default function HomePage() {
               <div className="num">
                 <span className="counter" data-target="100" data-suffix="%">0</span>
               </div>
-              <div className="label">on-device processing</div>
+              <div className="label">secure processing</div>
             </div>
             <div className="stat reveal">
               <div className="num">

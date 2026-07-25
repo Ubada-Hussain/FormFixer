@@ -9,10 +9,21 @@ function getTodayString(): string {
 }
 
 export async function GET() {
-  const { userId } = auth();
+  const { userId, sessionClaims } = auth();
 
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const isPro = sessionClaims?.metadata?.isPro === true;
+
+  if (isPro) {
+    return NextResponse.json({
+      count: 0,
+      remaining: 999999,
+      limit: 999999,
+      isPro: true,
+    });
   }
 
   const today = getTodayString();
@@ -48,10 +59,21 @@ export async function GET() {
 }
 
 export async function POST() {
-  const { userId } = auth();
+  const { userId, sessionClaims } = auth();
 
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const isPro = sessionClaims?.metadata?.isPro === true;
+
+  if (isPro) {
+    return NextResponse.json({
+      count: 0,
+      remaining: 999999,
+      limit: 999999,
+      isPro: true,
+    });
   }
 
   const today = getTodayString();

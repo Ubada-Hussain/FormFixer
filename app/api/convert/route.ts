@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { rateLimit } from '@/lib/rate-limit';
 
 const DAILY_LIMIT = 5;
 
@@ -17,16 +18,31 @@ function resolveServiceUrl(envVar: string | undefined): string | null {
   return val.replace(/\/+$/, '');
 }
 
+
+
 export async function POST(req: Request) {
-  const { userId } = auth();
+  const { userId, sessionClaims } = auth();
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const isPro = sessionClaims?.metadata?.isPro === true;
+
+
+  // Rate limiting (max 10 requests per minute per user)
+  const { success } = rateLimit(userId, 10, 60 * 1000);
+  if (!success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please wait a minute before trying again.' },
+      { status: 429 }
+    );
+  }
+
   const today = getTodayString();
 
-  // 1. Daily limit check
-  try {
+  // 1. Daily limit check (Bypass for Pro)
+  if (!isPro) {
+    try {
     const { data: usageData, error: fetchErr } = await supabase
       .from('usage_logs')
       .select('action_count')
@@ -54,6 +70,7 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error('Usage check error:', err);
   }
+  }
 
   // 2. Parse uploaded file
   const formData = await req.formData();
@@ -63,14 +80,35 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'No file uploaded.' }, { status: 400 });
   }
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB limit
+  if (file.size > MAX_FILE_SIZE) {
+    return NextResponse.json(
+      { error: 'File is too large. Maximum allowed size is 10MB.' },
+      { status: 413 }
+    );
+  }
+
   const fileName = file.name || 'document';
   const nameLower = fileName.toLowerCase();
-  const isPdf = nameLower.endsWith('.pdf');
-  const isWord = nameLower.endsWith('.docx') || nameLower.endsWith('.doc');
+
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+
+  if (buffer.length < 4) {
+    return NextResponse.json({ error: 'Invalid file format or empty file.' }, { status: 400 });
+  }
+
+  // Magic bytes checking
+  const isPdfMagic = buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46; // %PDF
+  const isDocxMagic = buffer[0] === 0x50 && buffer[1] === 0x4B && buffer[2] === 0x03 && buffer[3] === 0x04; // PK..
+  const isDocMagic = buffer[0] === 0xD0 && buffer[1] === 0xCF && buffer[2] === 0x11 && buffer[3] === 0xE0; // OLE DOC
+
+  const isPdf = isPdfMagic;
+  const isWord = isDocxMagic || isDocMagic;
 
   if (!isPdf && !isWord) {
     return NextResponse.json(
-      { error: 'Unsupported format. Please upload a PDF or Word (.docx) file.' },
+      { error: 'Invalid file signature. Only authentic PDF or Word (.docx/.doc) files are allowed.' },
       { status: 400 }
     );
   }
@@ -95,11 +133,12 @@ export async function POST(req: Request) {
     }
 
     const upstream = new FormData();
-    const bytes = await file.arrayBuffer();
     upstream.append('file', new Blob([bytes], { type: 'application/pdf' }), fileName);
 
     const endpoint = `${pdf2docxUrl}/convert`;
     console.log('[/api/convert] PDF→DOCX via', endpoint, '| file:', fileName);
+
+    const internalKey = process.env.INTERNAL_API_KEY || '';
 
     let res: Response;
     try {
@@ -107,8 +146,12 @@ export async function POST(req: Request) {
         method: 'POST',
         body: upstream,
         signal: AbortSignal.timeout(120_000), // pdf2docx can be slow on first request
+        headers: {
+          'X-Internal-Key': internalKey,
+        },
       });
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as Error;
       console.error('[/api/convert] pdf2docx service unreachable:', e.message);
       return NextResponse.json(
         { error: 'PDF-to-Word conversion service is temporarily unavailable. Please try again shortly.' },
@@ -147,11 +190,12 @@ export async function POST(req: Request) {
       : 'application/msword';
 
     const upstream = new FormData();
-    const bytes = await file.arrayBuffer();
     upstream.append('files', new Blob([bytes], { type: mimeType }), fileName);
 
     const endpoint = `${gotenbergUrl}/forms/libreoffice/convert`;
     console.log('[/api/convert] DOCX→PDF via', endpoint, '| file:', fileName);
+
+    const internalKey = process.env.INTERNAL_API_KEY || '';
 
     let res: Response;
     try {
@@ -159,8 +203,12 @@ export async function POST(req: Request) {
         method: 'POST',
         body: upstream,
         signal: AbortSignal.timeout(60_000),
+        headers: {
+          'X-Internal-Key': internalKey,
+        },
       });
-    } catch (e: any) {
+    } catch (err) {
+      const e = err as Error;
       console.error('[/api/convert] Gotenberg unreachable:', e.message);
       return NextResponse.json(
         { error: 'Word-to-PDF conversion service is temporarily unavailable. Please try again shortly.' },
@@ -183,8 +231,9 @@ export async function POST(req: Request) {
   }
 
   // 4. Increment daily usage
-  try {
-    const { data: latestData } = await supabase
+  if (!isPro) {
+    try {
+      const { data: latestData } = await supabase
       .from('usage_logs')
       .select('action_count')
       .eq('user_id', userId)
@@ -201,6 +250,7 @@ export async function POST(req: Request) {
     );
   } catch (err) {
     console.warn('Supabase usage increment error:', err);
+  }
   }
 
   // 5. Stream converted file back to browser

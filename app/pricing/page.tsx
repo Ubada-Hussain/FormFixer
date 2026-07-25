@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { auth } from '@clerk/nextjs/server';
 
 export const metadata: Metadata = {
   title: 'Pricing',
@@ -16,6 +17,9 @@ function CheckIcon() {
 }
 
 export default function PricingPage() {
+  const { userId, sessionClaims } = auth();
+  const isPro = sessionClaims?.metadata?.isPro === true;
+
   return (
     <>
       <header className="page-hero">
@@ -41,7 +45,7 @@ export default function PricingPage() {
                 <li><CheckIcon />5 compress or convert actions per day, every feature included</li>
                 <li><CheckIcon />All university portal presets</li>
                 <li><CheckIcon />Images to PDF</li>
-                <li><CheckIcon />PDF to Word & Word to PDF</li>
+                <li><CheckIcon />English PDF to Word & Word to PDF</li>
                 <li><CheckIcon />On-device processing, zero ads</li>
               </ul>
               <Link href="/compress" className="btn btn-ghost">
@@ -59,12 +63,18 @@ export default function PricingPage() {
                 <li><CheckIcon />Unlimited compress and convert actions, every day</li>
                 <li><CheckIcon />All university portal presets</li>
                 <li><CheckIcon />Images to PDF</li>
-                <li><CheckIcon />PDF to Word & Word to PDF</li>
+                <li><CheckIcon />English PDF to Word & Word to PDF</li>
                 <li><CheckIcon />Priority processing, zero daily limits</li>
               </ul>
-              <a href="#" className="btn btn-primary">
-                Upgrade to Pro
-              </a>
+              {isPro ? (
+                <button className="btn btn-primary" disabled style={{ opacity: 0.6, cursor: 'not-allowed' }}>
+                  ✓ You are on Pro
+                </button>
+              ) : (
+                <button className="btn btn-primary" disabled style={{ opacity: 0.6, cursor: 'not-allowed' }}>
+                  Upgrade to Pro (Coming soon)
+                </button>
+              )}
             </div>
           </div>
 

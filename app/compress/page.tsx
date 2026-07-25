@@ -82,9 +82,7 @@ export default function CompressPage() {
 
   const onPresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (!e.target.value) return;
-    const parts = e.target.value.split(',').map(Number);
-    // format: maxKb,w,h,kb — only apply the KB target
-    setTargetKb(parts[3]);
+    setTargetKb(Number(e.target.value));
   };
 
   const compress = useCallback(async () => {

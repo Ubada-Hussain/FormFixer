@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Header
 from fastapi.responses import Response
 import tempfile
 import os
@@ -18,7 +18,14 @@ def health():
 
 
 @app.post("/convert")
-async def convert_pdf_to_docx(file: UploadFile = File(...)):
+async def convert_pdf_to_docx(
+    file: UploadFile = File(...),
+    x_internal_key: str = Header(None)
+):
+    expected_key = os.environ.get("INTERNAL_API_KEY")
+    if expected_key and x_internal_key != expected_key:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid internal API key.")
+
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided.")
 
@@ -42,6 +49,23 @@ async def convert_pdf_to_docx(file: UploadFile = File(...)):
         with open(pdf_path, "wb") as f:
             f.write(pdf_bytes)
 
+        # 1. RTL / Urdu / Arabic Check
+        import fitz
+        doc = fitz.open(pdf_path)
+        sample_text = ""
+        for i in range(min(2, len(doc))):
+            sample_text += doc[i].get_text()
+        doc.close()
+        
+        rtl_count = sum(1 for c in sample_text if '\u0600' <= c <= '\u06FF')
+        if len(sample_text) > 50 and (rtl_count / len(sample_text)) > 0.03:
+            return Response(
+                status_code=400,
+                content='{"error": "Urdu/Arabic PDF-to-Word conversion isn\'t supported yet — we don\'t want to hand you garbled output. This is coming soon. English documents convert normally.", "isRtlUnsupported": true}',
+                media_type="application/json"
+            )
+
+        # 2. Proceed with conversion if no RTL
         # Imported here to prevent heavy load at startup
         from pdf2docx import Converter
         cv = Converter(pdf_path)

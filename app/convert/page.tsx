@@ -17,6 +17,7 @@ export default function ConvertPage() {
   const [fileEntries, setFileEntries] = useState<FileEntry[]>([]);
   const [singleFile, setSingleFile] = useState<File | null>(null);
   const [status, setStatus] = useState('');
+  const [isRtlError, setIsRtlError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [isDrag, setIsDrag] = useState(false);
 
@@ -107,6 +108,7 @@ export default function ConvertPage() {
   const runServerConversion = useCallback(async () => {
     if (!singleFile || isLimitReached) return;
     setBusy(true);
+    setIsRtlError(false);
 
     const label =
       mode === 'pdf2word'
@@ -130,7 +132,17 @@ export default function ConvertPage() {
 
       if (!res.ok) {
         let msg = 'Conversion failed.';
-        try { msg = (await res.json()).error ?? msg; } catch { /* non-JSON */ }
+        let rtlErr = false;
+        try { 
+          const json = await res.json();
+          msg = json.error ?? msg; 
+          rtlErr = !!json.isRtlUnsupported;
+        } catch { /* non-JSON */ }
+        
+        if (rtlErr) {
+          setIsRtlError(true);
+          throw new Error(msg);
+        }
         throw new Error(msg);
       }
 
@@ -158,9 +170,10 @@ export default function ConvertPage() {
       }).catch(() => {});
 
       setStatus(`Downloaded: ${dlName}`);
-    } catch (err: any) {
-      console.error(err);
-      setStatus(err.message || 'Conversion failed. Please try again.');
+    } catch (err) {
+      const e = err as Error;
+      console.error(e);
+      setStatus(e.message || 'Conversion failed. Please try again.');
     } finally {
       setBusy(false);
     }
@@ -171,6 +184,7 @@ export default function ConvertPage() {
     setMode(m);
     setSingleFile(null);
     setStatus('');
+    setIsRtlError(false);
   };
 
   return (
@@ -300,7 +314,14 @@ export default function ConvertPage() {
                 >
                   {busy ? 'Converting — please wait…' : 'Convert PDF to Word'}
                 </button>
-                {status && <span className="status-line show">{status}</span>}
+                {status && (
+                  <span 
+                    className={`status-line show ${isRtlError ? 'text-blue-600 bg-blue-50 border border-blue-200 py-3 px-4 rounded-xl mt-4 block whitespace-pre-wrap leading-relaxed' : ''}`}
+                    style={isRtlError ? { color: 'var(--ink)' } : undefined}
+                  >
+                    {status}
+                  </span>
+                )}
               </div>
             </div>
           )}
