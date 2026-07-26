@@ -4,6 +4,8 @@ import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
+import CookieBanner from '@/components/CookieBanner';
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -41,6 +43,7 @@ const clerkAppearance = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const hasValidClerkKey = Boolean(
     publishableKey &&
     publishableKey.startsWith('pk_') &&
@@ -52,11 +55,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <Navbar />
       {children}
       <Footer />
+      <CookieBanner />
     </body>
   );
 
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+      {gaMeasurementId && <GoogleAnalytics measurementId={gaMeasurementId} />}
       {hasValidClerkKey ? (
         <ClerkProvider appearance={clerkAppearance}>
           {innerBody}
