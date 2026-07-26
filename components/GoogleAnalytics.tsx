@@ -24,6 +24,14 @@ export default function GoogleAnalytics({ measurementId }: { measurementId: stri
     }
   }, [pathname, searchParams, measurementId]);
 
+  if (!measurementId) {
+    // Fail silently in production, warn in development if the env var is missing
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('GoogleAnalytics: NEXT_PUBLIC_GA_MEASUREMENT_ID is missing.');
+    }
+    return null;
+  }
+
   return (
     <>
       <Script
