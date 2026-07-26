@@ -6,8 +6,8 @@ import { useEffect } from 'react';
 
 declare global {
   interface Window {
-    gtag: any;
-    dataLayer: any[];
+    gtag: (...args: unknown[]) => void;
+    dataLayer: unknown[];
   }
 }
 

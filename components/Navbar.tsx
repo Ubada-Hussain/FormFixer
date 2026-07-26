@@ -58,7 +58,6 @@ export default function Navbar() {
                   Compress
                 </Link>
                 <UserButton
-                  fallbackRedirectUrl="/"
                   appearance={{
                     elements: {
                       avatarBox: 'w-9 h-9 border border-[#e2ded6] shadow-sm',
