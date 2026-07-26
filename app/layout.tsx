@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import CookieBanner from '@/components/CookieBanner';
+import { Suspense } from 'react';
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -61,7 +62,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <GoogleAnalytics measurementId={gaMeasurementId as string} />
+      <Suspense fallback={null}>
+        <GoogleAnalytics measurementId={gaMeasurementId as string} />
+      </Suspense>
       {hasValidClerkKey ? (
         <ClerkProvider appearance={clerkAppearance} afterSignOutUrl="/">
           {innerBody}
