@@ -21,12 +21,38 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.formfixer.online'),
   title: {
     default: 'FormFixer - fix your file for any form',
     template: '%s - FormFixer',
   },
   description:
     "Compress photos and convert documents to the precise size a portal demands - no guesswork, no sketchy tools, and no popups telling you it's still too big.",
+  openGraph: {
+    title: 'FormFixer - fix your file for any form',
+    description: "Compress photos and convert documents to the precise size a portal demands.",
+    url: 'https://www.formfixer.online',
+    siteName: 'FormFixer',
+    locale: 'en_US',
+    type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'FormFixer - Compress and convert files for any form',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'FormFixer - fix your file for any form',
+    description: "Compress photos and convert documents to the precise size a portal demands.",
+    images: ['/og-image.png'],
+  },
+  alternates: {
+    canonical: '/',
+  },
 };
 
 const clerkAppearance = {

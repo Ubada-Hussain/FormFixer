@@ -3,9 +3,9 @@ import Link from 'next/link';
 import { auth } from '@clerk/nextjs/server';
 
 export const metadata: Metadata = {
-  title: 'Pricing',
+  title: 'Pricing — FormFixer',
   description:
-    'FormFixer pricing — 5 free compress or convert actions every day. Upgrade to Pro for unlimited daily actions.',
+    'FormFixer pricing — 5 free compress or convert actions every day. Upgrade to Pro for unlimited daily actions. No ads, ever.',
 };
 
 function CheckIcon() {
@@ -20,8 +20,43 @@ export default function PricingPage() {
   const { sessionClaims } = auth();
   const isPro = sessionClaims?.metadata?.isPro === true;
 
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'How does the daily 5-action limit work?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Every logged-in account gets 5 free actions per calendar day across both file compression and file conversion combined (e.g. 3 compresses + 2 converts = 5 total actions). Your counter resets automatically at midnight.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Can I cancel Pro anytime?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Yes — Pro is month-to-month with no lock-in. Cancel anytime and you\'ll keep 5 free daily actions on the Free tier.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Do you show ads on the Free plan?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'No. FormFixer never shows ads or popups on any plan, free or paid.',
+        },
+      },
+    ],
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <header className="page-hero">
         <div className="wrap">
           <span className="tag">Pricing</span>

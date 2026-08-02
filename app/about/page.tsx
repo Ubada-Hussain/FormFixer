@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'About',
+  title: 'About FormFixer — Built for Students',
   description:
     'Why FormFixer exists — built after one too many broken compressor sites, for students filling out scholarship and admission forms.',
 };
