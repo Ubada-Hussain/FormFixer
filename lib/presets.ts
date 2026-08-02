@@ -2,9 +2,22 @@ export interface Preset {
   name: string;
   kb: number;
   verified: boolean;
+  slug: string;
 }
 
-export const PRESETS: Preset[] = [
+export function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')        // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')    // Remove all non-word chars
+    .replace(/\-\-+/g, '-')      // Replace multiple - with single -
+    .replace(/^-+/, '')          // Trim - from start of text
+    .replace(/-+$/, '');         // Trim - from end of text
+}
+
+const RAW_PRESETS = [
   { name: "NUST", kb: 100, verified: false },
   { name: "COMSATS University Islamabad", kb: 100, verified: false },
   { name: "University of the Punjab", kb: 100, verified: false },
@@ -57,6 +70,11 @@ export const PRESETS: Preset[] = [
   { name: "Allama Iqbal Open University", kb: 100, verified: false },
   { name: "Pakistan Institute of Engineering and Applied Sciences", kb: 100, verified: false },
 ];
+
+export const PRESETS: Preset[] = RAW_PRESETS.map((p) => ({
+  ...p,
+  slug: slugify(p.name),
+}));
 
 export const MARQUEE_NAMES = PRESETS.map((p) => p.name);
 

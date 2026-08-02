@@ -60,8 +60,8 @@ export default function PresetsPage() {
                     <span>Max File Size</span>
                     <span>{p.kb} KB</span>
                   </div>
-                  <Link href={`/compress?kb=${p.kb}`} className="go">
-                    Use this preset &rarr;
+                  <Link href={`/presets/${p.slug}`} className="go">
+                    View Requirements &rarr;
                   </Link>
                 </div>
               ))}

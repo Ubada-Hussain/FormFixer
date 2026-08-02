@@ -1,25 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
-import { MARQUEE_NAMES } from '@/lib/presets';
+import { useEffect } from 'react';
+import { PRESETS } from '@/lib/presets';
 
 export default function HomePage() {
-  const marqueeRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    // Build marquee pills
-    if (marqueeRef.current) {
-      const names = [...MARQUEE_NAMES, ...MARQUEE_NAMES];
-      marqueeRef.current.innerHTML = '';
-      names.forEach((name) => {
-        const pill = document.createElement('div');
-        pill.className = 'pill';
-        pill.innerHTML = '<span class="swatch"></span>' + name;
-        marqueeRef.current!.appendChild(pill);
-      });
-    }
-
     // Reveal on scroll
     const io = new IntersectionObserver(
       (entries) => {
@@ -208,7 +194,14 @@ export default function HomePage() {
           </div>
         </div>
         <div className="marquee-wrap">
-          <div className="marquee animate-scroll-left" ref={marqueeRef} />
+          <div className="marquee animate-scroll-left">
+            {[...PRESETS, ...PRESETS].map((p, i) => (
+              <Link key={i} href={`/presets/${p.slug}`} className="pill">
+                <span className="swatch"></span>
+                {p.name}
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
