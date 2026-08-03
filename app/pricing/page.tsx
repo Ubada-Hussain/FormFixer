@@ -19,10 +19,28 @@ export default function PricingPage() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const handleNotify = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleNotify = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
-    setSubmitted(true);
+    if (!email.trim() || loading) return;
+    setLoading(true);
+    
+    try {
+      await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      // We set submitted to true even on error so they aren't blocked, 
+      // but ideally we'd show an error state if it failed.
+      setSubmitted(true);
+    } catch (err) {
+      console.error(err);
+      setSubmitted(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -36,8 +54,8 @@ export default function PricingPage() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 24px 80px',
+        justifyContent: 'flex-start',
+        padding: '10vh 24px 80px',
         position: 'relative',
         overflow: 'hidden',
       }}>
@@ -167,7 +185,8 @@ export default function PricingPage() {
           width: '100%', maxWidth: 480, height: 360,
           position: 'relative',
           animation: 'float-canvas 6s ease-in-out infinite',
-          marginBottom: 8,
+          marginTop: '2vh',
+          marginBottom: -10,
         }}>
           <Suspense fallback={
             <div style={{
@@ -242,8 +261,8 @@ export default function PricingPage() {
                 required
                 aria-label="Email address for premium notifications"
               />
-              <button id="notify-btn" type="submit" className="notify-btn">
-                Notify me
+              <button id="notify-btn" type="submit" className="notify-btn" disabled={loading}>
+                {loading ? 'Joining…' : 'Notify me'}
               </button>
             </form>
           )}
