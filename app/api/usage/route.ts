@@ -2,10 +2,16 @@ import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-const DAILY_LIMIT = 5;
+const DAILY_CREDITS = 5000;
 
-function getTodayString(): string {
-  return new Date().toISOString().split('T')[0];
+/**
+ * Returns today's date string in PKT (UTC+5) timezone.
+ * Resets at midnight Pakistan Standard Time.
+ */
+function getTodayPKT(): string {
+  const PKT_OFFSET_MS = 5 * 60 * 60 * 1000; // UTC+5
+  const nowPKT = new Date(Date.now() + PKT_OFFSET_MS);
+  return nowPKT.toISOString().split('T')[0];
 }
 
 export async function GET() {
@@ -19,19 +25,21 @@ export async function GET() {
 
   if (isPro) {
     return NextResponse.json({
-      count: 0,
-      remaining: 999999,
-      limit: 999999,
+      credits_used: 0,
+      credits_remaining: DAILY_CREDITS,
+      daily_limit: DAILY_CREDITS,
+      remaining: DAILY_CREDITS, // backwards compat
+      limit: DAILY_CREDITS,
       isPro: true,
     });
   }
 
-  const today = getTodayString();
+  const today = getTodayPKT();
 
   try {
     const { data, error } = await supabase
       .from('usage_logs')
-      .select('action_count')
+      .select('credits_used')
       .eq('user_id', userId)
       .eq('action_date', today)
       .maybeSingle();
@@ -40,25 +48,29 @@ export async function GET() {
       console.warn('Supabase fetch notice:', error.message);
     }
 
-    const count = data?.action_count || 0;
-    const remaining = Math.max(0, DAILY_LIMIT - count);
+    const creditsUsed = data?.credits_used ?? 0;
+    const creditsRemaining = Math.max(0, DAILY_CREDITS - creditsUsed);
 
     return NextResponse.json({
-      count,
-      remaining,
-      limit: DAILY_LIMIT,
+      credits_used: creditsUsed,
+      credits_remaining: creditsRemaining,
+      daily_limit: DAILY_CREDITS,
+      remaining: creditsRemaining, // backwards compat
+      limit: DAILY_CREDITS,
     });
   } catch (err) {
     console.error('Usage GET error:', err);
     return NextResponse.json({
-      count: 0,
-      remaining: DAILY_LIMIT,
-      limit: DAILY_LIMIT,
+      credits_used: 0,
+      credits_remaining: DAILY_CREDITS,
+      daily_limit: DAILY_CREDITS,
+      remaining: DAILY_CREDITS,
+      limit: DAILY_CREDITS,
     });
   }
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   const { userId, sessionClaims } = auth();
 
   if (!userId) {
@@ -69,20 +81,33 @@ export async function POST() {
 
   if (isPro) {
     return NextResponse.json({
-      count: 0,
-      remaining: 999999,
-      limit: 999999,
+      credits_used: 0,
+      credits_remaining: DAILY_CREDITS,
+      daily_limit: DAILY_CREDITS,
+      remaining: DAILY_CREDITS,
+      limit: DAILY_CREDITS,
       isPro: true,
     });
   }
 
-  const today = getTodayString();
+  // Parse the credit cost from the request body
+  let cost = 300; // safe default minimum
+  try {
+    const body = await request.json();
+    if (typeof body?.cost === 'number' && body.cost > 0) {
+      cost = Math.round(body.cost);
+    }
+  } catch {
+    // no body or non-JSON body — use default
+  }
+
+  const today = getTodayPKT();
 
   try {
-    // 1. Fetch current count
+    // 1. Fetch current credits used
     const { data, error: fetchErr } = await supabase
       .from('usage_logs')
-      .select('action_count')
+      .select('credits_used')
       .eq('user_id', userId)
       .eq('action_date', today)
       .maybeSingle();
@@ -91,29 +116,33 @@ export async function POST() {
       console.warn('Supabase fetch notice:', fetchErr.message);
     }
 
-    const currentCount = data?.action_count || 0;
+    const currentUsed = data?.credits_used ?? 0;
+    const currentRemaining = Math.max(0, DAILY_CREDITS - currentUsed);
 
-    // 2. Reject with 403 if count is already 5 or more
-    if (currentCount >= DAILY_LIMIT) {
+    // 2. Reject if insufficient credits
+    if (currentRemaining < cost) {
       return NextResponse.json(
         {
-          error: "You've used today's 5 free actions. Upgrade to Pro for unlimited, or come back tomorrow.",
-          count: currentCount,
-          remaining: 0,
-          limit: DAILY_LIMIT,
+          error: `Not enough credits. This action costs ${cost} credits, but you only have ${currentRemaining} remaining today. Your credits reset at midnight PKT.`,
+          credits_used: currentUsed,
+          credits_remaining: currentRemaining,
+          daily_limit: DAILY_CREDITS,
+          cost,
         },
         { status: 403 }
       );
     }
 
-    const newCount = currentCount + 1;
+    const newUsed = currentUsed + cost;
 
-    // 3. Upsert incremented count into usage_logs
+    // 3. Upsert the new credits_used value
     const { error: upsertErr } = await supabase.from('usage_logs').upsert(
       {
         user_id: userId,
         action_date: today,
-        action_count: newCount,
+        credits_used: newUsed,
+        // Keep action_count for any legacy reads (set to 1 as a heartbeat)
+        action_count: 1,
       },
       { onConflict: 'user_id,action_date' }
     );
@@ -122,19 +151,25 @@ export async function POST() {
       console.warn('Supabase upsert notice:', upsertErr.message);
     }
 
-    const remaining = Math.max(0, DAILY_LIMIT - newCount);
+    const newRemaining = Math.max(0, DAILY_CREDITS - newUsed);
 
     return NextResponse.json({
-      count: newCount,
-      remaining,
-      limit: DAILY_LIMIT,
+      credits_used: newUsed,
+      credits_remaining: newRemaining,
+      daily_limit: DAILY_CREDITS,
+      cost,
+      remaining: newRemaining, // backwards compat
+      limit: DAILY_CREDITS,
     });
   } catch (err) {
     console.error('Usage POST error:', err);
     return NextResponse.json({
-      count: 1,
-      remaining: 4,
-      limit: DAILY_LIMIT,
+      credits_used: cost,
+      credits_remaining: DAILY_CREDITS - cost,
+      daily_limit: DAILY_CREDITS,
+      cost,
+      remaining: DAILY_CREDITS - cost,
+      limit: DAILY_CREDITS,
     });
   }
 }

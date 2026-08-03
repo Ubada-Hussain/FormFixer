@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import CreditMeter from './CreditMeter';
 
 const NAV_LINKS = [
   { href: '/compress', label: 'Compress' },
@@ -54,6 +55,7 @@ export default function Navbar() {
               </SignedOut>
 
               <SignedIn>
+                <CreditMeter />
                 <Link href="/compress" className="btn btn-ghost btn-sm">
                   Compress
                 </Link>
