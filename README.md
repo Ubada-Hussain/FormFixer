@@ -1,85 +1,31 @@
 # FormFixer
 
-FormFixer is a powerful, privacy-first web application designed to help users prepare their documents and photos perfectly for online application forms. Whether you need an image compressed to an exact KB limit or a PDF converted to Word, FormFixer handles it quickly and securely.
+**FormFixer** is your all-in-one toolkit for preparing documents and photos for online applications. Whether you're applying to a university, submitting a scholarship form, or uploading official documents, FormFixer ensures your files meet the exact, strict requirements of any online portal.
 
 ## What We Offer
 
 ### 📸 Precision Image Compression
-- **Exact Size Targeting:** Set a target file size (e.g., 200KB) and FormFixer will compress your JPG, PNG, or WebP to fit right under that limit.
-- **Client-Side Processing:** Images are compressed entirely in your browser using the HTML5 Canvas API. Your photos are **never uploaded to any server**, ensuring 100% privacy and blazing fast speeds.
-- **University Presets:** Built-in presets for major Pakistani universities (NUST, FAST, Punjab University, etc.) so you instantly know what size and format is required for your admission portals.
+Online forms often reject photos that are "too large" or the "wrong format." We fix that instantly.
+- **Exact Size Targeting:** Simply type in the maximum file size you need (e.g., 200KB), and FormFixer will compress your photo to fit right under that limit without losing visible quality.
+- **University Presets:** Applying in Pakistan? We have built-in presets for major universities (NUST, FAST, Punjab University, COMSATS, etc.) so you don't even need to look up the requirements. Just select your university, and we automatically set the correct sizes and dimensions.
+- **100% Private:** Your photos never leave your device. All image compression happens right inside your browser for maximum privacy and blazing-fast speeds.
 
 ### 📄 Document Conversion
-- **PDF to Word & Word to PDF:** Seamlessly convert documents using our secure backend powered by Gotenberg.
-- **Images to PDF:** Merge multiple images into a single PDF document instantly using `pdf-lib`.
+- **PDF to Word:** Need to edit a PDF form or application? Convert it to an editable Word document securely.
+- **Word to PDF:** Finalize your essays, resumes, and applications by locking them into a secure, universally accepted PDF format.
+- **Images to PDF:** Combine multiple scanned pages, ID cards, or photos into a single, clean PDF document ready for upload.
 
-### ⚡ Smart Daily Credit System
-- **Free Tier:** Users get 5,000 free credits every day.
-- **Fair Pricing:** Image compression costs a minimum of 300 credits, and document conversion costs a minimum of 500 credits (scaling automatically based on file MB size).
-- **Midnight Resets:** Credits automatically reset to 5,000 at Midnight PKT (Pakistan Standard Time).
-- **Real-Time Meter:** A beautiful, animated SVG credit ring in the navigation bar tracks your daily usage in real time.
+### ⚡ Smart Daily Credits
+We believe in fair, accessible tools for students and professionals.
+- **Generous Free Tier:** Every user gets **5,000 free credits** every single day.
+- **Fair Usage:** Processing costs scale based on how heavy your files are, so you're never penalized for small tasks.
+- **Midnight Resets:** Your credits automatically refill to 5,000 every day at Midnight PKT (Pakistan Standard Time).
 
-### 🎨 Premium 3D "Coming Soon" Experience
-Our `/pricing` page features a jaw-dropping, fully interactive 3D React Three Fiber scene. It includes a highly refractive liquid glass core, flowing Lissajous ribbons, and a massive 900+ particle swarm that reacts in parallax to your mouse movements. It also includes a functional Waitlist email capture form.
+### 🚀 Coming Soon: Premium Features
+We're currently brewing our Premium tier! Soon, you'll be able to unlock unlimited credits, priority processing speeds, ad-free experiences, and advanced batch-processing tools. 
+
+Head over to our **Pricing** page to join the exclusive waitlist and secure early-bird access!
 
 ---
 
-## Tech Stack & Architecture
-
-- **Framework:** Next.js 14 (App Router)
-- **Styling:** Vanilla CSS (`index.css`) — fully custom, modern design with no Tailwind dependency.
-- **Authentication:** Clerk
-- **Database:** Supabase (PostgreSQL) — handles the daily `usage_logs` and `waitlist`.
-- **3D Graphics:** Three.js, `@react-three/fiber`, and `@react-three/drei`.
-- **PDF Processing:** Gotenberg (Docker) and `pdf-lib`.
-
-## Setup & Local Development
-
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-2. **Environment Variables:**
-   Create a `.env.local` file and add your keys for Clerk and Supabase:
-   ```env
-   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-   CLERK_SECRET_KEY=sk_test_...
-   
-   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-   
-   GOTENBERG_URL=http://localhost:3000 # If running Gotenberg locally
-   ```
-
-3. **Supabase Database Schema:**
-   Ensure you have the following tables set up in your Supabase SQL Editor:
-
-   *Usage Logs Table:*
-   ```sql
-   CREATE TABLE usage_logs (
-     user_id TEXT NOT NULL,
-     action_date DATE NOT NULL,
-     credits_used INTEGER NOT NULL DEFAULT 0,
-     action_count INTEGER DEFAULT 1,
-     PRIMARY KEY (user_id, action_date)
-   );
-   ```
-
-   *Waitlist Table:*
-   ```sql
-   CREATE TABLE waitlist (
-     id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-     email TEXT UNIQUE NOT NULL,
-     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-   );
-   ```
-
-4. **Run the development server:**
-   ```bash
-   npm run dev
-   ```
-   The app will be available at [http://localhost:3000](http://localhost:3000).
-
-## License
-Copyright © FormFixer. All rights reserved.
+*FormFixer — Stop fighting with file uploads. Just fix it and submit.*
