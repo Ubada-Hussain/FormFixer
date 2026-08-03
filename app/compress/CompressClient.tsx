@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { PRESET_SELECT_OPTIONS } from '@/lib/presets';
-import { triggerCreditRefresh } from '@/components/CreditMeter';
+import { triggerCreditRefresh, updateCreditMeter } from '@/components/CreditMeter';
 
 /** Credit cost for image compression: 150 cr/MB, minimum 300 */
 function calcCompressCost(fileSizeBytes: number): number {
@@ -159,8 +159,14 @@ export default function CompressPage() {
       const usageData = await usageRes.json();
       if (typeof usageData.credits_remaining === 'number') {
         setCreditsRemaining(usageData.credits_remaining);
+        updateCreditMeter({
+          credits_remaining: usageData.credits_remaining,
+          credits_used: usageData.credits_used,
+          daily_limit: usageData.daily_limit,
+        });
+      } else {
+        triggerCreditRefresh();
       }
-      triggerCreditRefresh();
 
       setStatus('Compressing…');
       const objectUrl = URL.createObjectURL(file);

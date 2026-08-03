@@ -12,10 +12,16 @@ interface CreditData {
   isPro?: boolean;
 }
 
-// Exported so CompressClient and ConvertClient can trigger a refresh
+// Exported so tools can trigger a refresh or directly update the data
 let globalRefreshFn: (() => void) | null = null;
+let globalUpdateFn: ((newData: Partial<CreditData>) => void) | null = null;
+
 export function triggerCreditRefresh() {
   globalRefreshFn?.();
+}
+
+export function updateCreditMeter(newData: Partial<CreditData>) {
+  globalUpdateFn?.(newData);
 }
 
 function formatCredits(n: number): string {
@@ -53,11 +59,15 @@ export default function CreditMeter() {
 
   useEffect(() => {
     globalRefreshFn = fetchCredits;
+    globalUpdateFn = (newData) => {
+      setData((prev) => prev ? { ...prev, ...newData } : newData as CreditData);
+    };
     fetchCredits();
     const interval = setInterval(fetchCredits, POLL_INTERVAL_MS);
     return () => {
       clearInterval(interval);
       globalRefreshFn = null;
+      globalUpdateFn = null;
     };
   }, [fetchCredits]);
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { triggerCreditRefresh } from '@/components/CreditMeter';
+import { triggerCreditRefresh, updateCreditMeter } from '@/components/CreditMeter';
 
 type Mode = 'img2pdf' | 'pdf2word' | 'word2pdf';
 
@@ -128,8 +128,16 @@ export default function ConvertPage() {
     }
 
     const ud = await usageRes.json();
-    if (typeof ud.credits_remaining === 'number') setCreditsRemaining(ud.credits_remaining);
-    triggerCreditRefresh();
+    if (typeof ud.credits_remaining === 'number') {
+      setCreditsRemaining(ud.credits_remaining);
+      updateCreditMeter({
+        credits_remaining: ud.credits_remaining,
+        credits_used: ud.credits_used,
+        daily_limit: ud.daily_limit,
+      });
+    } else {
+      triggerCreditRefresh();
+    }
     return true;
   }, []);
 
