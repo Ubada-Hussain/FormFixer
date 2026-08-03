@@ -1,171 +1,140 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Environment, Float, PresentationControls, ContactShadows, RoundedBox, Sparkles } from '@react-three/drei';
+import { Environment, MeshTransmissionMaterial, Float, Sparkles, Trail, PresentationControls } from '@react-three/drei';
 import * as THREE from 'three';
 
-// ── Interactive Document Stack ───────────────────────────────────────────────
-function DocumentStack() {
-  const doc1 = useRef<THREE.Group>(null);
-  const doc2 = useRef<THREE.Group>(null);
-  const [hovered, setHovered] = useState(false);
-
-  // Switch cursor to grab on hover
-  useEffect(() => {
-    document.body.style.cursor = hovered ? 'grab' : 'auto';
-    return () => { document.body.style.cursor = 'auto'; };
-  }, [hovered]);
-
-  useFrame((state) => {
-    if (!doc1.current || !doc2.current) return;
-    
-    // Animate separation and tilt on hover
-    const targetZ1 = hovered ? 0.6 : 0.15;
-    const targetZ2 = hovered ? -0.6 : -0.15;
-    const targetRotX1 = hovered ? -0.05 : 0;
-    const targetRotX2 = hovered ? 0.05 : 0;
-    
-    doc1.current.position.z = THREE.MathUtils.lerp(doc1.current.position.z, targetZ1, 0.08);
-    doc2.current.position.z = THREE.MathUtils.lerp(doc2.current.position.z, targetZ2, 0.08);
-    
-    doc1.current.rotation.x = THREE.MathUtils.lerp(doc1.current.rotation.x, targetRotX1, 0.08);
-    doc2.current.rotation.x = THREE.MathUtils.lerp(doc2.current.rotation.x, targetRotX2, 0.08);
-    
-    // Add a gentle continuous spin/bobbing
-    const t = state.clock.getElapsedTime();
-    doc1.current.position.y = Math.sin(t * 1.5) * 0.1;
-    doc2.current.position.y = Math.cos(t * 1.5) * 0.1;
-  });
+// ── 1. Liquid Glass Core ───────────────────────────────────────────────────────
+function LiquidCore() {
+  const meshRef = useRef<THREE.Mesh>(null);
   
+  useFrame((state) => {
+    if (!meshRef.current) return;
+    const t = state.clock.getElapsedTime();
+    // Slowly morph and spin the core
+    meshRef.current.rotation.y = t * 0.15;
+    meshRef.current.rotation.x = t * 0.1;
+    meshRef.current.position.y = Math.sin(t * 1.5) * 0.15;
+  });
+
   return (
-    <group 
-      onPointerOver={() => setHovered(true)}
-      onPointerOut={() => setHovered(false)}
+    <mesh ref={meshRef} castShadow receiveShadow>
+      {/* A complex geometry to create beautiful glass refractions */}
+      <torusKnotGeometry args={[1.2, 0.45, 256, 64]} />
+      {/* Premium Glass Material */}
+      <MeshTransmissionMaterial 
+        backside
+        samples={4}
+        thickness={1.5}
+        roughness={0.05}
+        ior={1.5}
+        chromaticAberration={0.6}
+        anisotropy={0.3}
+        distortion={0.4}
+        distortionScale={0.5}
+        temporalDistortion={0.2}
+        color="#ffffff"
+      />
+    </mesh>
+  );
+}
+
+// ── 2. Abstract Flowing Ribbon ────────────────────────────────────────────────
+function Ribbon({ color, speed, offset, radius }: { color: string; speed: number; offset: number; radius: number }) {
+  const ref = useRef<THREE.Mesh>(null);
+  
+  useFrame((state) => {
+    if (!ref.current) return;
+    const t = (state.clock.getElapsedTime() + offset) * speed;
+    // Lissajous curve for elegant swooping motion
+    ref.current.position.x = Math.sin(t * 1.2) * radius;
+    ref.current.position.y = Math.cos(t * 0.8) * radius * 0.8;
+    ref.current.position.z = Math.sin(t * 1.5) * radius * 1.2;
+  });
+
+  return (
+    <Trail
+      width={0.6}
+      color={color}
+      length={12}
+      decay={1.5}
+      attenuation={(t) => t * t * t} // Taper gracefully
     >
-      <PresentationControls
-        global
-        config={{ mass: 2, tension: 500 }}
-        snap={{ mass: 4, tension: 1500 }}
-        rotation={[0.1, -0.4, 0]}
-        polar={[-Math.PI / 3, Math.PI / 3]}
-        azimuth={[-Math.PI / 2, Math.PI / 2]}
-      >
-        <group ref={doc1}>
-            {/* Document 1: Representing a Photo / Image File */}
-            <RoundedBox args={[2, 2.8, 0.1]} radius={0.05} smoothness={4} castShadow receiveShadow>
-               <meshPhysicalMaterial 
-                  color="#ffffff"
-                  metalness={0.1}
-                  roughness={0.2}
-                  transmission={0.95}
-                  ior={1.5}
-                  thickness={0.5}
-                  transparent
-                />
-            </RoundedBox>
-            
-            {/* Image block */}
-            <RoundedBox args={[1.5, 1.2, 0.12]} radius={0.1} position={[0, 0.5, 0]}>
-               <meshStandardMaterial color="#0F6E56" emissive="#0F6E56" emissiveIntensity={0.2} />
-            </RoundedBox>
-            
-            {/* Text lines */}
-            <RoundedBox args={[1.5, 0.15, 0.12]} radius={0.05} position={[0, -0.4, 0]}>
-               <meshStandardMaterial color="#D85A30" />
-            </RoundedBox>
-            <RoundedBox args={[1.1, 0.15, 0.12]} radius={0.05} position={[-0.2, -0.7, 0]}>
-               <meshStandardMaterial color="#D85A30" />
-            </RoundedBox>
-        </group>
-        
-        <group ref={doc2}>
-            {/* Document 2: Representing a Document / PDF */}
-            <RoundedBox args={[2, 2.8, 0.1]} radius={0.05} smoothness={4} castShadow receiveShadow>
-               <meshPhysicalMaterial 
-                  color="#ffffff"
-                  metalness={0.1}
-                  roughness={0.2}
-                  transmission={0.95}
-                  ior={1.5}
-                  thickness={0.5}
-                  transparent
-                />
-            </RoundedBox>
-            
-            {/* Text lines */}
-            <RoundedBox args={[1.4, 0.12, 0.12]} radius={0.04} position={[0, 0.9, 0]}>
-               <meshStandardMaterial color="#1D9E75" />
-            </RoundedBox>
-            <RoundedBox args={[1.4, 0.12, 0.12]} radius={0.04} position={[0, 0.6, 0]}>
-               <meshStandardMaterial color="#1D9E75" />
-            </RoundedBox>
-            <RoundedBox args={[1.0, 0.12, 0.12]} radius={0.04} position={[-0.2, 0.3, 0]}>
-               <meshStandardMaterial color="#1D9E75" />
-            </RoundedBox>
-            
-            <RoundedBox args={[1.4, 0.12, 0.12]} radius={0.04} position={[0, -0.1, 0]}>
-               <meshStandardMaterial color="#04342C" />
-            </RoundedBox>
-            <RoundedBox args={[1.2, 0.12, 0.12]} radius={0.04} position={[-0.1, -0.4, 0]}>
-               <meshStandardMaterial color="#04342C" />
-            </RoundedBox>
-        </group>
-      </PresentationControls>
+      <mesh ref={ref} visible={false}>
+        <sphereGeometry args={[0.1]} />
+      </mesh>
+    </Trail>
+  );
+}
+
+// ── 3. Interactive Particle Swarm ─────────────────────────────────────────────
+function Swarm() {
+  const group = useRef<THREE.Group>(null);
+  
+  useFrame((state) => {
+    if (!group.current) return;
+    // Smoothly react to mouse pointer for a parallax effect
+    const targetX = (state.pointer.x * state.viewport.width) / 5;
+    const targetY = (state.pointer.y * state.viewport.height) / 5;
+    
+    group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, targetY * 0.2, 0.05);
+    group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, targetX * 0.2, 0.05);
+  });
+
+  return (
+    <group ref={group}>
+      <Sparkles count={400} scale={14} size={3} speed={0.4} color="#0F6E56" opacity={0.5} noise={0.4} />
+      <Sparkles count={300} scale={12} size={2} speed={0.5} color="#D85A30" opacity={0.6} noise={0.6} />
+      <Sparkles count={200} scale={10} size={4} speed={0.2} color="#FBF8F0" opacity={0.8} noise={0.2} />
     </group>
   );
 }
 
-// ── Main exported Scene ───────────────────────────────────────────────────────
+// ── Main Scene Composition ────────────────────────────────────────────────────
 export default function Scene3D() {
+  const [hovered, setHovered] = useState(false);
+
   return (
-    <Canvas
-      camera={{ position: [0, 0, 6], fov: 45 }}
-      gl={{ antialias: true, alpha: true }}
-      style={{ width: '100%', height: '100%', background: 'transparent' }}
-      dpr={[1, 2]}
+    <div
+      style={{ width: '100%', height: '100%', cursor: hovered ? 'grab' : 'auto' }}
+      onPointerOver={() => setHovered(true)}
+      onPointerOut={() => setHovered(false)}
     >
-      {/* Lighting */}
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[5, 10, 5]} intensity={1.5} color="#ffffff" />
-      <pointLight position={[-4, -2, -4]} intensity={1} color="#D85A30" />
-      <pointLight position={[4, 2, 2]} intensity={1.5} color="#1D9E75" />
+      <Canvas
+        camera={{ position: [0, 0, 8], fov: 45 }}
+        gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping }}
+        dpr={[1, 2]}
+      >
+        {/* Elegant cinematic lighting */}
+        <ambientLight intensity={0.2} />
+        <directionalLight position={[5, 10, 5]} intensity={2} color="#ffffff" />
+        <pointLight position={[-5, -5, -5]} intensity={1.5} color="#D85A30" />
+        <pointLight position={[5, 0, -2]} intensity={2.5} color="#0F6E56" />
 
-      {/* HDRI environment for reflections on glass */}
-      <Environment preset="city" />
+        {/* Environment for stunning glass refractions */}
+        <Environment preset="city" />
 
-      {/* Floating Interactive Document Stack */}
-      <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.4}>
-        <DocumentStack />
-      </Float>
+        {/* Presentation Controls allow user to drag & spin the core */}
+        <PresentationControls
+          global
+          config={{ mass: 2, tension: 400 }}
+          snap={{ mass: 4, tension: 400 }}
+          rotation={[0.1, -0.2, 0]}
+          polar={[-Math.PI / 3, Math.PI / 3]}
+          azimuth={[-Math.PI / 2, Math.PI / 2]}
+        >
+          <Float speed={1.2} rotationIntensity={0.2} floatIntensity={0.5}>
+            <LiquidCore />
+            <Ribbon color="#0F6E56" speed={0.8} offset={0} radius={3.5} />
+            <Ribbon color="#D85A30" speed={0.6} offset={Math.PI} radius={3} />
+          </Float>
+        </PresentationControls>
 
-      {/* Ground soft shadow */}
-      <ContactShadows 
-        position={[0, -2.2, 0]} 
-        opacity={0.6} 
-        scale={10} 
-        blur={2.5} 
-        far={4} 
-        color="#0F6E56" 
-      />
+        {/* Background Swarm that reacts to mouse tracking independently */}
+        <Swarm />
 
-      {/* Ambient Sparkles */}
-      <Sparkles
-        count={50}
-        size={1.6}
-        speed={0.4}
-        opacity={0.6}
-        color="#0F6E56"
-        scale={6}
-      />
-      <Sparkles
-        count={30}
-        size={1.2}
-        speed={0.3}
-        opacity={0.4}
-        color="#D85A30"
-        scale={5}
-      />
-    </Canvas>
+      </Canvas>
+    </div>
   );
 }
