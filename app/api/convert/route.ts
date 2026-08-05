@@ -75,6 +75,7 @@ export async function POST(req: Request) {
   // 2. Parse uploaded file
   const formData = await req.formData();
   const file = formData.get('file') as File | null;
+  const target = formData.get('target') as string | null;
 
   if (!file) {
     return NextResponse.json({ error: 'No file uploaded.' }, { status: 400 });
@@ -100,15 +101,15 @@ export async function POST(req: Request) {
 
   // Magic bytes checking
   const isPdfMagic = buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46; // %PDF
-  const isDocxMagic = buffer[0] === 0x50 && buffer[1] === 0x4B && buffer[2] === 0x03 && buffer[3] === 0x04; // PK..
-  const isDocMagic = buffer[0] === 0xD0 && buffer[1] === 0xCF && buffer[2] === 0x11 && buffer[3] === 0xE0; // OLE DOC
+  const isOfficeXMagic = buffer[0] === 0x50 && buffer[1] === 0x4B && buffer[2] === 0x03 && buffer[3] === 0x04; // PK.. (.docx, .pptx, etc.)
+  const isOfficeOldMagic = buffer[0] === 0xD0 && buffer[1] === 0xCF && buffer[2] === 0x11 && buffer[3] === 0xE0; // OLE DOC (.doc, .ppt, etc.)
 
   const isPdf = isPdfMagic;
-  const isWord = isDocxMagic || isDocMagic;
+  const isOffice = isOfficeXMagic || isOfficeOldMagic;
 
-  if (!isPdf && !isWord) {
+  if (!isPdf && !isOffice) {
     return NextResponse.json(
-      { error: 'Invalid file signature. Only authentic PDF or Word (.docx/.doc) files are allowed.' },
+      { error: 'Invalid file signature. Only authentic PDF, Word, or PowerPoint files are allowed.' },
       { status: 400 }
     );
   }
@@ -119,13 +120,12 @@ export async function POST(req: Request) {
   let contentType: string;
 
   if (isPdf) {
-    // PDF → Word via pdf2docx microservice
     const pdf2docxUrl = resolveServiceUrl(process.env.PDF2DOCX_URL);
     if (!pdf2docxUrl) {
       return NextResponse.json(
         {
           error:
-            'PDF-to-Word conversion service is not configured. ' +
+            'PDF conversion service is not configured. ' +
             'Please deploy the pdf2docx microservice and add PDF2DOCX_URL to your environment.',
         },
         { status: 503 }
@@ -135,8 +135,15 @@ export async function POST(req: Request) {
     const upstream = new FormData();
     upstream.append('file', new Blob([bytes], { type: 'application/pdf' }), fileName);
 
-    const endpoint = `${pdf2docxUrl}/convert`;
-    console.log('[/api/convert] PDF→DOCX via', endpoint, '| file:', fileName);
+    let endpoint = `${pdf2docxUrl}/convert`;
+    let targetFormatName = 'Word';
+    
+    if (target === 'powerpoint') {
+      endpoint = `${pdf2docxUrl}/pdf-to-pptx`;
+      targetFormatName = 'PowerPoint';
+    }
+
+    console.log(`[/api/convert] PDF→${targetFormatName} via`, endpoint, '| file:', fileName);
 
     const internalKey = process.env.INTERNAL_API_KEY || '';
 
@@ -145,34 +152,50 @@ export async function POST(req: Request) {
       res = await fetch(endpoint, {
         method: 'POST',
         body: upstream,
-        signal: AbortSignal.timeout(120_000), // pdf2docx can be slow on first request
+        signal: AbortSignal.timeout(120_000), // can be slow on first request
         headers: {
           'X-Internal-Key': internalKey,
         },
       });
     } catch (err) {
       const e = err as Error;
-      console.error('[/api/convert] pdf2docx service unreachable:', e.message);
+      console.error(`[/api/convert] pdf2docx service unreachable:`, e.message);
       return NextResponse.json(
-        { error: 'PDF-to-Word conversion service is temporarily unavailable. Please try again shortly.' },
+        { error: `PDF-to-${targetFormatName} conversion service is temporarily unavailable. Please try again shortly.` },
         { status: 503 }
       );
     }
 
     if (!res.ok) {
       const errText = await res.text().catch(() => '(no body)');
-      console.error('[/api/convert] pdf2docx service error', res.status, errText);
+      console.error(`[/api/convert] pdf2docx service error`, res.status, errText);
+      
+      // Pass along RTL unsupported error specifically
+      if (res.status === 400 && errText.includes('isRtlUnsupported')) {
+        try {
+          const errJson = JSON.parse(errText);
+          return NextResponse.json(errJson, { status: 400 });
+        } catch {
+          // fallthrough
+        }
+      }
+      
       return NextResponse.json(
-        { error: 'PDF-to-Word conversion failed. The file may be corrupted, encrypted, or too complex. Please try a different file.' },
+        { error: `PDF-to-${targetFormatName} conversion failed. The file may be corrupted, encrypted, or too complex. Please try a different file.` },
         { status: 502 }
       );
     }
 
     convertedBuffer = Buffer.from(await res.arrayBuffer());
-    outputFilename = fileName.replace(/\.pdf$/i, '') + '-converted.docx';
-    contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    if (target === 'powerpoint') {
+      outputFilename = fileName.replace(/\.pdf$/i, '') + '-converted.pptx';
+      contentType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    } else {
+      outputFilename = fileName.replace(/\.pdf$/i, '') + '-converted.docx';
+      contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    }
   } else {
-    // Word → PDF via Gotenberg
+    // Office → PDF via Gotenberg
     const gotenbergUrl = resolveServiceUrl(process.env.GOTENBERG_URL);
     if (!gotenbergUrl) {
       return NextResponse.json(
@@ -185,15 +208,22 @@ export async function POST(req: Request) {
       );
     }
 
-    const mimeType = nameLower.endsWith('.docx')
-      ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      : 'application/msword';
+    let mimeType = 'application/octet-stream';
+    if (nameLower.endsWith('.docx')) {
+      mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    } else if (nameLower.endsWith('.doc')) {
+      mimeType = 'application/msword';
+    } else if (nameLower.endsWith('.pptx')) {
+      mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    } else if (nameLower.endsWith('.ppt')) {
+      mimeType = 'application/vnd.ms-powerpoint';
+    }
 
     const upstream = new FormData();
     upstream.append('files', new Blob([bytes], { type: mimeType }), fileName);
 
     const endpoint = `${gotenbergUrl}/forms/libreoffice/convert`;
-    console.log('[/api/convert] DOCX→PDF via', endpoint, '| file:', fileName);
+    console.log('[/api/convert] Office→PDF via', endpoint, '| file:', fileName);
 
     const internalKey = process.env.INTERNAL_API_KEY || '';
 
@@ -211,7 +241,7 @@ export async function POST(req: Request) {
       const e = err as Error;
       console.error('[/api/convert] Gotenberg unreachable:', e.message);
       return NextResponse.json(
-        { error: 'Word-to-PDF conversion service is temporarily unavailable. Please try again shortly.' },
+        { error: 'Document-to-PDF conversion service is temporarily unavailable. Please try again shortly.' },
         { status: 503 }
       );
     }
@@ -220,13 +250,13 @@ export async function POST(req: Request) {
       const errText = await res.text().catch(() => '(no body)');
       console.error('[/api/convert] Gotenberg error', res.status, errText);
       return NextResponse.json(
-        { error: 'Word-to-PDF conversion failed. The file may be corrupted or in an unsupported format. Please try a different file.' },
+        { error: 'Document-to-PDF conversion failed. The file may be corrupted or in an unsupported format. Please try a different file.' },
         { status: 502 }
       );
     }
 
     convertedBuffer = Buffer.from(await res.arrayBuffer());
-    outputFilename = fileName.replace(/\.(docx?|doc)$/i, '') + '-converted.pdf';
+    outputFilename = fileName.replace(/\.(docx?|doc|pptx?|ppt)$/i, '') + '-converted.pdf';
     contentType = 'application/pdf';
   }
 

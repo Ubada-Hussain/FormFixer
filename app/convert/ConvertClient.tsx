@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { triggerCreditRefresh, updateCreditMeter } from '@/components/CreditMeter';
 
-type Mode = 'img2pdf' | 'pdf2word' | 'word2pdf';
+type Mode = 'img2pdf' | 'pdf2word' | 'word2pdf' | 'pdf2pptx' | 'pptx2pdf';
 
 interface FileEntry {
   file: File;
@@ -188,7 +188,11 @@ export default function ConvertPage() {
     const label =
       mode === 'pdf2word'
         ? 'Converting PDF to Word — this may take 10–30 seconds…'
-        : 'Converting Word to PDF…';
+        : mode === 'pdf2pptx'
+        ? 'Converting PDF to PowerPoint — this may take 10–30 seconds…'
+        : mode === 'word2pdf'
+        ? 'Converting Word to PDF…'
+        : 'Converting PowerPoint to PDF…';
     setStatus(label);
 
     try {
@@ -198,6 +202,9 @@ export default function ConvertPage() {
 
       const body = new FormData();
       body.append('file', singleFile);
+      if (mode === 'pdf2pptx') {
+        body.append('target', 'powerpoint');
+      }
 
       const res = await fetch('/api/convert', { method: 'POST', body });
 
@@ -220,9 +227,14 @@ export default function ConvertPage() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
 
-      let dlName = mode === 'pdf2word'
-        ? singleFile.name.replace(/\.pdf$/i, '') + '-converted.docx'
-        : singleFile.name.replace(/\.(docx?|doc)$/i, '') + '-converted.pdf';
+      let dlName = 'converted-document';
+      if (mode === 'pdf2word') {
+        dlName = singleFile.name.replace(/\.pdf$/i, '') + '-converted.docx';
+      } else if (mode === 'pdf2pptx') {
+        dlName = singleFile.name.replace(/\.pdf$/i, '') + '-converted.pptx';
+      } else {
+        dlName = singleFile.name.replace(/\.(docx?|doc|pptx?|ppt)$/i, '') + '-converted.pdf';
+      }
 
       const disp = res.headers.get('content-disposition');
       if (disp) {
@@ -256,7 +268,7 @@ export default function ConvertPage() {
   // Compute estimated cost for UI
   const estimatedCost = (() => {
     if (mode === 'img2pdf' && fileEntries.length > 0) return calcImg2PdfCost(fileEntries);
-    if ((mode === 'pdf2word' || mode === 'word2pdf') && singleFile) return calcConvertCost(singleFile.size);
+    if ((mode === 'pdf2word' || mode === 'word2pdf' || mode === 'pdf2pptx' || mode === 'pptx2pdf') && singleFile) return calcConvertCost(singleFile.size);
     return null;
   })();
 
@@ -296,10 +308,22 @@ export default function ConvertPage() {
               PDF to Word
             </button>
             <button
+              className={`mode-btn${mode === 'pdf2pptx' ? ' active' : ''}`}
+              onClick={() => switchMode('pdf2pptx')}
+            >
+              PDF to PowerPoint
+            </button>
+            <button
               className={`mode-btn${mode === 'word2pdf' ? ' active' : ''}`}
               onClick={() => switchMode('word2pdf')}
             >
               Word to PDF
+            </button>
+            <button
+              className={`mode-btn${mode === 'pptx2pdf' ? ' active' : ''}`}
+              onClick={() => switchMode('pptx2pdf')}
+            >
+              PowerPoint to PDF
             </button>
           </div>
 
@@ -446,6 +470,83 @@ export default function ConvertPage() {
                   onClick={runServerConversion}
                 >
                   {busy ? 'Converting — please wait…' : 'Convert Word to PDF'}
+                </button>
+                {status && <span className="status-line show">{status}</span>}
+              </div>
+            </div>
+          )}
+
+          {/* ── PDF to PowerPoint ────────────────────────────────────────────── */}
+          {mode === 'pdf2pptx' && (
+            <div id="panel-pdf2pptx">
+              <div
+                className={`dropzone${isDrag ? ' drag' : ''}`}
+                onClick={() => singleFileInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setIsDrag(true); }}
+                onDragLeave={() => setIsDrag(false)}
+                onDrop={onDrop}
+              >
+                <h3>{singleFile ? singleFile.name : 'Drop a PDF document here'}</h3>
+                <p>
+                  or click to browse — converts PDF to a PowerPoint (.pptx) file.
+                  <br />
+                  <span style={{ fontSize: '0.9em', color: 'var(--ink-soft)' }}>
+                    Note: Slides will be image-based (not editable text) to preserve exact layout and formatting.
+                  </span>
+                </p>
+                <input
+                  type="file"
+                  ref={singleFileInputRef}
+                  accept=".pdf,application/pdf"
+                  onChange={(e) => { if (e.target.files?.length) setSingleFile(e.target.files[0]); }}
+                />
+              </div>
+              <div className="action-row">
+                <button
+                  className="btn btn-primary"
+                  disabled={!singleFile || busy}
+                  onClick={runServerConversion}
+                >
+                  {busy ? 'Converting — please wait…' : 'Convert PDF to PowerPoint'}
+                </button>
+                {status && (
+                  <span className="status-line show">
+                    {status}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── PowerPoint to PDF ────────────────────────────────────────────── */}
+          {mode === 'pptx2pdf' && (
+            <div id="panel-pptx2pdf">
+              <div
+                className={`dropzone${isDrag ? ' drag' : ''}`}
+                onClick={() => singleFileInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setIsDrag(true); }}
+                onDragLeave={() => setIsDrag(false)}
+                onDrop={onDrop}
+              >
+                <h3>{singleFile ? singleFile.name : 'Drop a PowerPoint file here'}</h3>
+                <p>
+                  or click to browse — converts PowerPoint (.pptx, .ppt) to PDF via LibreOffice on our
+                  servers (takes a few seconds)
+                </p>
+                <input
+                  type="file"
+                  ref={singleFileInputRef}
+                  accept=".pptx,.ppt,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint"
+                  onChange={(e) => { if (e.target.files?.length) setSingleFile(e.target.files[0]); }}
+                />
+              </div>
+              <div className="action-row">
+                <button
+                  className="btn btn-primary"
+                  disabled={!singleFile || busy}
+                  onClick={runServerConversion}
+                >
+                  {busy ? 'Converting — please wait…' : 'Convert PowerPoint to PDF'}
                 </button>
                 {status && <span className="status-line show">{status}</span>}
               </div>
